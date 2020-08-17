@@ -18,13 +18,18 @@ const parseInternal = (filter, query) => {
     case '$and': {
       let partQuery = [];
       let fiteredQuery = query;
+      console.log("we arrived at the filter")
       filter.value.forEach( filterOp => {
+        console.log("we are inside the filter query appending all queries")
         partQuery.push(parseInternal(filterOp, query));
         //fiteredQuery = parseInternal(filterOp, query);
         });
+      console.log("this is the final partQuery array list")
       for (i = 0; i < partQuery.length; i++) {
         fiteredQuery = fiteredQuery.where(partQuery[i])
       }
+      console.log("this is the final query")
+      console.log(fiteredQuery)
       //return value ? `(${value})` : value;
       return fiteredQuery;
     }
