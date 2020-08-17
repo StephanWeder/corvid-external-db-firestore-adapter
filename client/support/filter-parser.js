@@ -1,5 +1,7 @@
 const BadRequestError = require('../../model/error/bad-request');
 const EMPTY = '';
+ 
+
 
 exports.parseFilter = (filter, query) => {
   if (filter && filter.operator) {
@@ -14,10 +16,15 @@ const parseInternal = (filter, query) => {
   switch (filter.operator) {
 
     case '$and': {
+      let partQuery = [];
       let fiteredQuery = query;
       filter.value.forEach( filterOp => {
-        fiteredQuery = parseInternal(filterOp, query);
+        partQuery.push(parseInternal(filterOp, query));
+        //fiteredQuery = parseInternal(filterOp, query);
         });
+      for (i = 0; i < partQuery.length; i++) {
+        fiteredQuery = fiteredQuery.where(partQuery[i])
+      }
       //return value ? `(${value})` : value;
       return fiteredQuery;
     }
@@ -59,7 +66,7 @@ const parseInternal = (filter, query) => {
     case '$eq': {
       return filter.value === null || filter.value === undefined
         ? `${filter.fieldName} IS NULL`
-        : query.where(`${filter.fieldName}`, '==', `${mapValue(filter.value)}`);
+        : `${filter.fieldName}`, '==', `${mapValue(filter.value)}`;
     }
     default:
       throw new BadRequestError(
