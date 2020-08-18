@@ -25,8 +25,9 @@ const parseInternal = (filter, query) => {
         //fiteredQuery = parseInternal(filterOp, query);
         });
       console.log("this is the final partQuery array list")
+      console.log(partQuery)
       for (i = 0; i < partQuery.length; i++) {
-        fiteredQuery = fiteredQuery.where(partQuery[i])
+        fiteredQuery = fiteredQuery.where(partQuery[i][0],partQuery[i][1],partQuery[i][2])
       }
       console.log("this is the final query")
       console.log(fiteredQuery)
@@ -45,13 +46,13 @@ const parseInternal = (filter, query) => {
     // case '$ne':
     //   return query.where(`${filter.fieldName}`, '!=', `${mapValue(filter.value)}`);
     case '$lt':
-      return query.where(`${filter.fieldName}`, '<', `${mapValue(filter.value)}`);
+      return [`${filter.fieldName}`, "<", `${mapValue(filter.value)}`];
     case '$lte':
-      return query.where(`${filter.fieldName}`,  '<=', `${mapValue(filter.value)}`);
+      return [`${filter.fieldName}`,  "<=", `${mapValue(filter.value)}`];
     case '$gt':
-      return query.where(`${filter.fieldName}`, '>', `${mapValue(filter.value)}`);
+      return [`${filter.fieldName}`, '>', `${mapValue(filter.value)}`];
     case '$gte':
-      return query.where(`${filter.fieldName}`, '>=', `${mapValue(filter.value)}`);
+      return [`${filter.fieldName}`, '>=', `${mapValue(filter.value)}`];
     case '$hasSome':
     case '$contains': {
       const list = filter.value
@@ -69,9 +70,11 @@ const parseInternal = (filter, query) => {
     // case '$endsWith':
     //   return `${filter.fieldName} LIKE ${mysql.escape(`%${filter.value}`)}`
     case '$eq': {
+      console.log("fieldname")
+      console.log(filter.fieldName)
       return filter.value === null || filter.value === undefined
         ? `${filter.fieldName} IS NULL`
-        : `${filter.fieldName}`, '==', `${mapValue(filter.value)}`;
+        : [`${filter.fieldName}`, '==', `${mapValue(filter.value)}`];
     }
     default:
       throw new BadRequestError(
