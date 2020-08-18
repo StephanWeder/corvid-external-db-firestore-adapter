@@ -50,9 +50,9 @@ const parseInternal = (filter, query) => {
     case '$lte':
       return [`${filter.fieldName}`,  "<=", `${mapValue(filter.value)}`];
     case '$gt':
-      return [`${filter.fieldName}`, '>', `${mapValue(filter.value)}`];
+      return [`${filter.fieldName}`, ">", `${mapValue(filter.value)}`];
     case '$gte':
-      return [`${filter.fieldName}`, '>=', `${mapValue(filter.value)}`];
+      return [`${filter.fieldName}`, ">=", `${mapValue(filter.value)}`];
     case '$hasSome':
     case '$contains': {
       const list = filter.value
@@ -84,5 +84,6 @@ const parseInternal = (filter, query) => {
 }
 
 const mapValue = value => {
-  return Date.parse(value) ? new Date(value) : value
+  //return Date.parse(value) ? new Date(value) : value
+  return Date.parse(value) ? value : value
 }
