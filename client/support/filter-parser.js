@@ -53,7 +53,9 @@ const parseInternal = (filter, query) => {
       return [`${filter.fieldName}`, ">", `${mapValue(filter.value)}`];
     case '$gte':
       return [`${filter.fieldName}`, ">=", `${mapValue(filter.value)}`];
+    // PRO: Used for querying Job titles in a more sophisticated way
     case '$hasSome':
+      return [`${filter.fieldName}`, "array-contains-any"]
     case '$contains': {
       const list = filter.value
         .map(mapValue)
@@ -72,9 +74,16 @@ const parseInternal = (filter, query) => {
     case '$eq': {
       console.log("fieldname")
       console.log(filter.fieldName)
-      return filter.value === null || filter.value === undefined
-        ? `${filter.fieldName} IS NULL`
-        : [`${filter.fieldName}`, '==', `${mapValue(filter.value)}`];
+      console.log(typeof(filter.value))
+      if (typeof(filter.value) === 'number'){
+        return filter.value === null || filter.value === undefined
+          ? `${filter.fieldName} IS NULL`
+          : [`${filter.fieldName}`, '==', filter.value];
+      } else {
+        return filter.value === null || filter.value === undefined
+          ? `${filter.fieldName} IS NULL`
+          : [`${filter.fieldName}`, '==', `${mapValue(filter.value)}`];
+      }
     }
     default:
       throw new BadRequestError(
@@ -87,3 +96,5 @@ const mapValue = value => {
   //return Date.parse(value) ? new Date(value) : value
   return Date.parse(value) ? value : value
 }
+
+console.log(typeof(10))
