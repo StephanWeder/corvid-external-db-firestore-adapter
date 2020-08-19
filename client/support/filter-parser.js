@@ -46,13 +46,29 @@ const parseInternal = (filter, query) => {
     // case '$ne':
     //   return query.where(`${filter.fieldName}`, '!=', `${mapValue(filter.value)}`);
     case '$lt':
-      return [`${filter.fieldName}`, "<", `${mapValue(filter.value)}`];
+      if (typeof(filter.value) === 'number'){
+        return [`${filter.fieldName}`, "<", filter.value];
+      } else {
+        return [`${filter.fieldName}`, "<", `${mapValue(filter.value)}`];
+      }
     case '$lte':
-      return [`${filter.fieldName}`,  "<=", `${mapValue(filter.value)}`];
+      if (typeof(filter.value) === 'number'){
+        return [`${filter.fieldName}`,  "<=", filter.value];
+      } else {
+        return [`${filter.fieldName}`,  "<=", `${mapValue(filter.value)}`];
+      }
     case '$gt':
-      return [`${filter.fieldName}`, ">", `${mapValue(filter.value)}`];
+      if (typeof(filter.value) === 'number'){
+        return [`${filter.fieldName}`, ">", filter.value];
+      } else {
+        return [`${filter.fieldName}`, ">", `${mapValue(filter.value)}`];
+      }
     case '$gte':
-      return [`${filter.fieldName}`, ">=", `${mapValue(filter.value)}`];
+      if (typeof(filter.value) === 'number'){
+        return [`${filter.fieldName}`, ">=", filter.value];
+      } else {
+        return [`${filter.fieldName}`, ">=", `${mapValue(filter.value)}`];
+      }
     // PRO: Used for querying Job titles in a more sophisticated way
     case '$hasSome':
       return [`${filter.fieldName}`, "array-contains-any"]
