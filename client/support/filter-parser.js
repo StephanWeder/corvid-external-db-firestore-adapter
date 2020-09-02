@@ -1,3 +1,5 @@
+const Firestore = require('@google-cloud/firestore');
+const client = require('../client/firestore');
 const BadRequestError = require('../../model/error/bad-request');
 const EMPTY = '';
  
@@ -11,7 +13,7 @@ exports.parseFilter = (filter, query) => {
   return query;
 };
 
-const parseInternal = (filter, query) => {
+const parseInternal = (filter, query, colName) => {
 
   switch (filter.operator) {
 
@@ -22,8 +24,9 @@ const parseInternal = (filter, query) => {
       filter.value.forEach( filterOp => {
         console.log("we are inside the filter query appending all queries")
         partQuery.push(parseInternal(filterOp, query));
-        //fiteredQuery = parseInternal(filterOp, query);
+        // - > this is the original code: fiteredQuery = parseInternal(filterOp, query);
         });
+
       console.log("this is the final partQuery array list")
       console.log(partQuery)
       for (i = 0; i < partQuery.length; i++) {
@@ -32,6 +35,27 @@ const parseInternal = (filter, query) => {
       console.log("this is the final query")
       console.log(fiteredQuery)
       //return value ? `(${value})` : value;
+
+
+
+      /**
+       * This is special implementation for companyfinder.professional.ch to enablie Jobad Title Filter, SW, 01.09.2020
+       */
+      if (colName === "allJobads") {
+        let doc_ids = []
+        let results = fiteredQuery.limit(query.limit).offset(query.skip).get().then(function(querySnapshot) {
+          querySnapshot.forEach(function(doc) {
+              // doc.data() is never undefined for query doc snapshots
+              doc_ids.push(doc.id)
+              console.log(doc.id, " => ", doc.data());
+          });
+        //for i in results
+        let companies = Firestore.collection('allCompanies').where('_name_', 'in', doc_ids)
+        fiteredQuery = companies
+
+      })
+    }
+
       return fiteredQuery;
     }
     
