@@ -1,5 +1,4 @@
 const Firestore = require('@google-cloud/firestore');
-const client = require('../client/firestore');
 const BadRequestError = require('../../model/error/bad-request');
 const EMPTY = '';
  
@@ -43,7 +42,7 @@ const parseInternal = (filter, query, colName) => {
        */
       if (colName === "allJobads") {
         let doc_ids = []
-        let results = fiteredQuery.limit(query.limit).offset(query.skip).get().then(function(querySnapshot) {
+        fiteredQuery.limit(query.limit).offset(query.skip).get().then(function(querySnapshot) {
           querySnapshot.forEach(function(doc) {
               // doc.data() is never undefined for query doc snapshots
               doc_ids.push(doc.id)
