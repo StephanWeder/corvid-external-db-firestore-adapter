@@ -14,10 +14,13 @@ const firestore = new Firestore({
 exports.query = (query) => {
   console.log('got query: ' + JSON.stringify(query));
   const collRef = firestore.collection(query.collectionName);
-  let collName = query.collectionName;
-
+  console.log("collectionName")
+  console.log(query.collectionName)
+  collId = query.collectionName;
+  console.log(collId)
+  
   let fsQuery = parseSort(query.sort, collRef);  
-  fsQuery = parseFilter(query.filter, fsQuery, collName);
+  fsQuery = parseFilter(query.filter, fsQuery, collId);
   if (query.select){
     fsQuery = fsQuery.select(query.select);
   }

@@ -2,17 +2,21 @@ const Firestore = require('@google-cloud/firestore');
 const BadRequestError = require('../../model/error/bad-request');
 const EMPTY = '';
  
+const firestore = new Firestore({
+  // client_email: serviceAccount.client_email,
+  // private_key: serviceAccount.private_key,
+  // projectId: serviceAccount.project_id,
+});
 
-
-exports.parseFilter = (filter, query) => {
+exports.parseFilter = (filter, query, collId) => {
   if (filter && filter.operator) {
-    return  parseInternal(filter, query);
+    return  parseInternal(filter, query, collId);
     //return parsed ? `WHERE ${parsed}` : EMPTY;
   }
   return query;
 };
 
-const parseInternal = (filter, query, colName) => {
+const parseInternal = (filter, query, collId) => {
 
   switch (filter.operator) {
 
@@ -29,7 +33,14 @@ const parseInternal = (filter, query, colName) => {
       console.log("this is the final partQuery array list")
       console.log(partQuery)
       for (i = 0; i < partQuery.length; i++) {
-        fiteredQuery = fiteredQuery.where(partQuery[i][0],partQuery[i][1],partQuery[i][2])
+        console.log(i)
+        console.log(partQuery[i][0])
+        console.log(partQuery[i][1])
+        console.log(partQuery[i][2])
+        console.log(typeof(partQuery[i][2]))
+        fiteredQuery = fiteredQuery.where(partQuery[i][0],partQuery[i][1], partQuery[i][2])
+        console.log("after loup")
+        console.log(fiteredQuery)
       }
       console.log("this is the final query")
       console.log(fiteredQuery)
@@ -40,22 +51,38 @@ const parseInternal = (filter, query, colName) => {
       /**
        * This is special implementation for companyfinder.professional.ch to enablie Jobad Title Filter, SW, 01.09.2020
        */
-      if (colName === "allJobads") {
+      console.log("here is collection name:")
+      console.log(collId)
+      if (collId === "allJobads") {
         let doc_ids = []
-        fiteredQuery.limit(query.limit).offset(query.skip).get().then(function(querySnapshot) {
-          querySnapshot.forEach(function(doc) {
+        console.log("inside special allJobads Filter!")
+        fiteredQuery.limit(100).offset(0).get().then((querySnapshot) => {
+          console.log("next")
+          a = 1
+          querySnapshot.forEach((doc) =>{
               // doc.data() is never undefined for query doc snapshots
-              doc_ids.push(doc.id)
-              console.log(doc.id, " => ", doc.data());
-          });
-        //for i in results
-        let companies = Firestore.collection('allCompanies').where('_name_', 'in', doc_ids)
-        fiteredQuery = companies
-
+              console.log("iterating over docs and then printing docs_ids")
+              doc_ids.push(doc.get("job_company_id"))
+              if (a === querySnapshot.size) {
+                return firestore.collection('allCompanies').where('company_id', "in", doc_ids)
+              }
+              a = a + 1
+          })
+          //for i in results
+          console.log(doc_ids)
+          //return firestore.collection('allCompanies').where('company_id', "in", doc_ids)
+            //fiteredQuery = companies
+          
+          //fiteredQuery = companies
+          
       })
-    }
+      console.log("returning" + collId)
+      //return fiteredQuery
+    } else {
 
       return fiteredQuery;
+    }
+    console.log("dead end...")
     }
     
     case '$or': {
@@ -94,7 +121,8 @@ const parseInternal = (filter, query, colName) => {
       }
     // PRO: Used for querying Job titles in a more sophisticated way
     case '$hasSome':
-      return [`${filter.fieldName}`, "array-contains-any"]
+      filter_value = filter.value
+      return [`${filter.fieldName}`, "array-contains", filter_value[0]];
     case '$contains': {
       const list = filter.value
         .map(mapValue)
