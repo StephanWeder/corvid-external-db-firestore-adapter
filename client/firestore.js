@@ -14,21 +14,41 @@ const firestore = new Firestore({
 exports.query = (query) => {
   console.log('got query: ' + JSON.stringify(query));
   const collRef = firestore.collection(query.collectionName);
-  console.log("collectionName")
-  console.log(query.collectionName)
+  //console.log("collectionName")
+  //console.log(query.collectionName)
   collId = query.collectionName;
-  console.log(collId)
+  //console.log(collId)
   
   let fsQuery = parseSort(query.sort, collRef);  
   fsQuery = parseFilter(query.filter, fsQuery, collId);
+  //console.log("parse Filter returned")
   if (query.select){
     fsQuery = fsQuery.select(query.select);
   }
-  return fsQuery
-    .limit(query.limit)
-    .offset(query.skip)
-    .get()
-};
+
+  if (query.collectionName === "allCompanies"){
+    let documentRefs = []
+
+    //console.log("setting ref variables")
+    //console.log(typeof(fsQuery))
+    //console.log(fsQuery)
+    counter = 0
+    for (var ref of fsQuery){
+      //console.log("ref")
+      //console.log(ref)
+      //console.log(typeof(ref))
+      documentRefs.push(firestore.doc('allCompanies/' + ref))
+    }
+    //console.log("returning all Refs")
+    return firestore.getAll(...documentRefs)
+    } else {
+      //console.log("before returning final fsQuery");
+      return fsQuery
+        .limit(query.limit)
+        .offset(query.skip)
+        .get()
+    }
+  };
 
 exports.get = (collectionName, itemId) => {
   return firestore
