@@ -43,82 +43,93 @@ exports.find = async payload => {
         const tmp_query = await client.query(query)
         //console.log(tmp_query)
         for(var doc of tmp_query.docs){
-            console.log(doc.id);
+            //console.log(doc.id);
             doc_ids.push(doc.data()["job_company_id"])
             }
-        console.log(doc_ids)
-        doc_ids = [...new Set(doc_ids)]
-        console.log(doc_ids)
-        var user_doc_ref = []
-        var user_docs = []
-        var user_company_ids = []
-        for (var item of doc_ids){
-            user_doc_ref.push(firestore.doc('userMatchingforCompanyFinder/'+ user_email + item))
-            console.log("creating usermatching references")
-            console.log("userMatchingforCompanyFinder/" + user_email + item)
+        if (doc_ids.length === 0){
+            return {
+                items: [],
+                totalCount: 0
+            }
+        } else {
+            //console.log(doc_ids)
+            doc_ids = [...new Set(doc_ids)]
+            var user_doc_ref = []
+            var user_docs = []
+            var user_company_ids = []
+            for (var item of doc_ids){
+                user_doc_ref.push(firestore.doc('userMatchingforCompanyFinder/'+ user_email + item))
+                //console.log("creating usermatching references")
+                //console.log("userMatchingforCompanyFinder/" + user_email + item)
 
-           // console.log("quering user matching")
-            //console.log(item)
-            //var tmp_user_doc = await firestore.collection("userMatchingforCompanyFinder").where("company_id", "==", item).get()//.where("u_email", "==", "stephan.weder@outlook.com")
-            //console.log(tmp_user_doc.docs[0].data())
-            //console.log("hahahahahahahahahahahahhaahahah")
-            //if (!tmp_user_doc.empty){
-            //    for (let doc of tmp_user_doc.docs){
-            //        //console.log("doc estists")
-            //        user_docs.push(doc)
-                    //console.log(1)
-                    //console.log(tmp_user_doc.docs[0])
-             //       user_company_ids.push(doc.data().company_id)
-                    //console.log(2)
-                    //console.log(user_company_ids)
-            //    }
-                //console.log("iterrating")
-            //} else {
-                //console.log("document does not exists")
-            //}
-        }
-        console.log("before getting al usermatching docs")
-        var userMatching = await firestore.getAll(...user_doc_ref)
-        console.log("got all userMatching Docs")
-        console.log(userMatching.length)
-        //console.log(userMatching)
-        var userDocIds = []
-        for (var doc of userMatching){
-            //console.log(doc)
-            console.log(typeof(doc))
-            if (doc.exists){
-                console.log("iterating over user Matching docs")
-                //console.log(doc.data())
-                userDocIds.push(doc.data()["company_id"])
-             } else {
-                 console.log("no document found")
-             }
-        }
-        query = {"collectionName":"allCompanies", "filter":{"operator":"$and","value":[{"operator":"$in","fieldName":"company_id","value":userDocIds}]}, "sort":[],"skip":0,"limit":5000}
-        const allCompanyiesDocs = await client.query(query)
-        var allUserMatchings = userMatching.map(doc => { return wrapDates({_id: doc.id,  ...doc.data() }) })
-        var allCompanies = allCompanyiesDocs.map(doc => { return wrapDates({_id: doc.id,  ...doc.data() }) })
+            // console.log("quering user matching")
+                //console.log(item)
+                //var tmp_user_doc = await firestore.collection("userMatchingforCompanyFinder").where("company_id", "==", item).get()//.where("u_email", "==", "stephan.weder@outlook.com")
+                //console.log(tmp_user_doc.docs[0].data())
+                //console.log("hahahahahahahahahahahahhaahahah")
+                //if (!tmp_user_doc.empty){
+                //    for (let doc of tmp_user_doc.docs){
+                //        //console.log("doc estists")
+                //        user_docs.push(doc)
+                        //console.log(1)
+                        //console.log(tmp_user_doc.docs[0])
+                //       user_company_ids.push(doc.data().company_id)
+                        //console.log(2)
+                        //console.log(user_company_ids)
+                //    }
+                    //console.log("iterrating")
+                //} else {
+                    //console.log("document does not exists")
+                //}
+            }
+            console.log("before getting al usermatching docs")
+            var userMatching = await firestore.getAll(...user_doc_ref)
+            console.log("got all userMatching Docs")
+            console.log(userMatching.length)
+            //console.log(userMatching)
+            var userDocIds = []
+            for (var doc of userMatching){
+                //console.log(doc)
+                //console.log(typeof(doc))
+                if (doc.exists){
+                    //console.log("iterating over user Matching docs")
+                    //console.log(doc.data())
+                    userDocIds.push(doc.data()["company_id"])
+                } else {
+                    console.log("no document found")
+                }
+            }
+            query = {"collectionName":"allCompanies", "filter":{"operator":"$and","value":[{"operator":"$in","fieldName":"company_id","value":userDocIds}]}, "sort":[],"skip":0,"limit":5000}
+            const allCompanyiesDocs = await client.query(query)
+            var allUserMatchings = userMatching.map(doc => { return wrapDates({_id: doc.id,  ...doc.data() }) })
+            var allCompanies = allCompanyiesDocs.map(doc => { return wrapDates({_id: doc.id,  ...doc.data() }) })
 
 
-        console.log("before merging")
-        let finalArray = allUserMatchings.map((item, i) => Object.assign({}, item, allCompanies[i]));
-        console.log(finalArray)
-        console.log("after merging")
-        //reomoving "deleted items"
-        finalArray = finalArray.filter(( obj ) => obj.delete.slice(-3) !== 'yes')
-        finalArray = finalArray.sort((a, b) => b.sum_match_percentage - a.sum_match_percentage)
-        sorted_IDs = []
-        for (var id of finalArray.slice(0,500)){
-            sorted_IDs.push(id.company_id)
-        }
-        TotalLength = finalArray.length
-        finalArray = finalArray.slice(skip, limit)
-        finalArray.slice(-1)[0].doc_ids = sorted_IDs
-            //query = query;
-        //enhanced = await finalArray.map(doc => { return wrapDates({ ...doc.data(), _id: doc.id }) })
-        return {
-            items: finalArray,
-            totalCount: TotalLength
+            console.log("before merging")
+            let finalArray = allUserMatchings.map((item, i) => Object.assign({}, item, allCompanies[i]));
+            //console.log(finalArray)
+            console.log("after merging")
+            //reomoving "deleted items"
+            finalArray = finalArray.filter(( obj ) => obj.delete.slice(-3) !== 'yes')
+            console.log("after filter")
+            finalArray = finalArray.sort((a, b) => b.sum_match_percentage - a.sum_match_percentage)
+            console.log("after sort")
+            sorted_IDs = []
+            for (var id of finalArray.slice(0,500)){
+                sorted_IDs.push(id.company_id)
+            }
+            console.log("after ids")
+            TotalLength = finalArray.length
+            finalArray = finalArray.slice(skip, limit)
+            console.log("after slicing")
+            finalArray.slice(-1)[0].doc_ids = sorted_IDs
+            console.log("before returning")
+                //query = query;
+            //enhanced = await finalArray.map(doc => { return wrapDates({ ...doc.data(), _id: doc.id }) })
+            return {
+                items: finalArray,
+                totalCount: TotalLength
+            }
         }
     } 
 
@@ -136,42 +147,49 @@ exports.find = async payload => {
             const favourite_companies = await client.query(query)
             var doc_ids = []
             for(var doc of favourite_companies.docs){
-                console.log(doc.id);
+                //console.log(doc.id);
                 doc_ids.push(doc.data()["company_id"])
                 }
-            query = {"collectionName":"allCompanies", "filter":{"operator":"$and","value":[{"operator":"$in","fieldName":"company_id","value":doc_ids}]}, "sort":[],"skip":0,"limit":5000}
-            const allCompanyiesDocs = await client.query(query)
-            console.log("query successfully executed")
-            var allUserMatchings = favourite_companies.docs.map(doc => { return wrapDates({_id: doc.id,  ...doc.data() }) })
-            var allCompanies = allCompanyiesDocs.map(doc => { return wrapDates({_id: doc.id,  ...doc.data() }) })
-    
-    
-            console.log("before merging")
-            let finalArray = allUserMatchings.map((item, i) => Object.assign({}, item, allCompanies[i]));
-            console.log(finalArray)
-            console.log("after merging")
-            //reomoving "deleted items"
-            finalArray = finalArray.filter(( obj ) => obj.delete.slice(-3) !== 'yes')
-            finalArray = finalArray.sort((a, b) => b.sum_match_percentage - a.sum_match_percentage)
-            sorted_IDs = []
-            for (var id of finalArray.slice(0,500)){
-                sorted_IDs.push(id.company_id)
-            }
-            TotalLength = finalArray.length
-            finalArray = finalArray.slice(skip, limit)
-            finalArray.slice(-1)[0].doc_ids = sorted_IDs
-                //query = query;
-            //enhanced = await finalArray.map(doc => { return wrapDates({ ...doc.data(), _id: doc.id }) })
-            return {
-                items: finalArray,
-                totalCount: TotalLength
+            if (doc_ids.length === 0){
+                return {
+                    items: [],
+                    totalCount: 0
+                }
+            } else {
+                query = {"collectionName":"allCompanies", "filter":{"operator":"$and","value":[{"operator":"$in","fieldName":"company_id","value":doc_ids}]}, "sort":[],"skip":0,"limit":5000}
+                const allCompanyiesDocs = await client.query(query)
+                console.log("query successfully executed")
+                var allUserMatchings = favourite_companies.docs.map(doc => { return wrapDates({_id: doc.id,  ...doc.data() }) })
+                var allCompanies = allCompanyiesDocs.map(doc => { return wrapDates({_id: doc.id,  ...doc.data() }) })
+        
+        
+                console.log("before merging")
+                let finalArray = allUserMatchings.map((item, i) => Object.assign({}, item, allCompanies[i]));
+                //console.log(finalArray)
+                console.log("after merging")
+                //reomoving "deleted items"
+                finalArray = finalArray.filter(( obj ) => obj.delete.slice(-3) !== 'yes')
+                finalArray = finalArray.sort((a, b) => b.sum_match_percentage - a.sum_match_percentage)
+                sorted_IDs = []
+                for (var id of finalArray.slice(0,500)){
+                    sorted_IDs.push(id.company_id)
+                }
+                TotalLength = finalArray.length
+                finalArray = finalArray.slice(skip, limit)
+                finalArray.slice(-1)[0].doc_ids = sorted_IDs
+                    //query = query;
+                //enhanced = await finalArray.map(doc => { return wrapDates({ ...doc.data(), _id: doc.id }) })
+                return {
+                    items: finalArray,
+                    totalCount: TotalLength
+                }
             }
         } else {
             var skip = payload.skip
             var limit = payload.limit
             // defining the skip & limit for query
             payload.skip = 0
-            payload.limit = 5000
+            payload.limit = 600
 
             const favourite_companies = await client.query(query)
             var doc_ids = []
@@ -183,8 +201,8 @@ exports.find = async payload => {
             const allCompanyiesDocs = await client.query(query)
 
             // get all assigned company jobs
-            query = {"collectionName":"allJobads", "filter":{"operator":"$and","value":[{"operator":"$eq","fieldName":"job_company_id","value":doc_ids[0]}]}, "sort":[],"skip":0,"limit":5000}
-            const allAssignedJobads = await client.query(query)
+            //query = {"collectionName":"allJobads", "filter":{"operator":"$and","value":[{"operator":"$eq","fieldName":"job_company_id","value":doc_ids[0]}]}, "sort":[],"skip":0,"limit":5000}
+            //const allAssignedJobads = await client.query(query)
 
 
             console.log("query successfully executed")
@@ -199,12 +217,13 @@ exports.find = async payload => {
             //finalArray = finalArray.filter(( obj ) => obj.delete.slice(-3) !== 'yes')
             //finalArray = finalArray.sort((a, b) => b.sum_match_percentage - a.sum_match_percentage)
             TotalLength = finalArray.length
-            //finalArray = finalArray.slice(skip, limit)
+            finalArray = finalArray.slice(skip, limit)
+            finalArray.slice(-1)[0].doc_ids = doc_ids
                 //query = query;
             //enhanced = await finalArray.map(doc => { return wrapDates({ ...doc.data(), _id: doc.id }) })
             return {
                 items: finalArray,
-                totalCount: TotalLength
+                totalCount: 600
             }
         }
     }
