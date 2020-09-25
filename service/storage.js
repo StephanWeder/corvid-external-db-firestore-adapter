@@ -88,6 +88,7 @@ exports.find = async payload => {
             console.log(userMatching.length)
             //console.log(userMatching)
             var userDocIds = []
+            var userMatchingExists = []
             for (var doc of userMatching){
                 //console.log(doc)
                 //console.log(typeof(doc))
@@ -95,13 +96,15 @@ exports.find = async payload => {
                     //console.log("iterating over user Matching docs")
                     //console.log(doc.data())
                     userDocIds.push(doc.data()["company_id"])
+                    userMatchingExists.push(doc)
+                    console.log("document found")
                 } else {
                     console.log("no document found")
                 }
             }
             query = {"collectionName":"allCompanies", "filter":{"operator":"$and","value":[{"operator":"$in","fieldName":"company_id","value":userDocIds}]}, "sort":[],"skip":0,"limit":5000}
             const allCompanyiesDocs = await client.query(query)
-            var allUserMatchings = userMatching.map(doc => { return wrapDates({_id: doc.id,  ...doc.data() }) })
+            var allUserMatchings = userMatchingExists.map(doc => { return wrapDates({_id: doc.id,  ...doc.data() }) })
             var allCompanies = allCompanyiesDocs.map(doc => { return wrapDates({_id: doc.id,  ...doc.data() }) })
 
 
